@@ -42,6 +42,10 @@ group :development do
   gem 'spring-watcher-listen', '~> 2.0.0'
 end
 
+group :production do
+gem 'pg'
+end
+
 gem 'font-awesome-sass', '~> 5.15'
 gem'rest-client'
 gem 'dotenv'
