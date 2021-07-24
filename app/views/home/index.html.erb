@@ -1,0 +1,76 @@
+<div class="row mt-5 mb-5">
+
+<h1>Welcome to Gasfast!</h1>
+<p class="lead">User Events for Surveys App.</p>
+<p>So today we’d like to talk about Event Sourcing.
+We’ll go over a high level introduction to Event Sourcing where we will highlight the four components that make a (minimal) Event Sourcing system: Events, Calculators, Aggregates and Reactors.
+We will then talk about how we implemented a (minimal) Event Sourcing Framework at Kickstarter for d.rip.
+And finally we’ll reflect a bit on the ah-ha moments and the challenges that we’re going through with this approach — 9 months after having started to work on d.rip and 4 months after launch.</p>
+<h3>What is Event Sourcing?</h3>
+<p>Martin Fowler defines Event Sourcing as:
+“All changes to an application state are stored as a sequence of events.”
+Let’s illustrate this with an imaginary e-commerce platform.</p>
+<h4>Events</h4>
+<p>User action, API calls, callbacks (webhooks), recurring cron jobs can all generate Events. Events are persisted and immutable.
+Here are some events generated as a customer placed an order on the platform:</p>
+
+<p>These events are this order’s history. We know when they happened, who triggered them and what they were. Note that the events above hold various pieces of information: product id, user id, order id, parcel tracking number, truck identifier etc.
+By going through these events, we get a sense of what the current state of the world is and how it came to be in that state. It would be nice not to play all events every time we want to build application state. That’s the role of Aggregates and Calculators.</p>
+<h4>Aggregates and Calculators</h4>
+<p>Aggregates represent the current state of the application.
+Calculators read events and update aggregates accordingly.
+
+The calculator reads the sequence of events and updates the order accordingly: it adds and removes items, updates the total and marks the shipping and delivery dates.
+You can create as many aggregates (and calculators) as you need. For example, an aggregate could read through the same set of events to generate a Daily Sales report.
+Now that we have the current state of the world, we also want to do things when that state changes. Like it would be sweet to send our customer an email confirmation when their order has just been shipped. We need something to “react” to events. Good news, there is such a thing. It’s a Reactor.</p>
+<h4>Reactors</h4>
+<p>Reactors “react” to events as they are created. They trigger side-effects and might create other events in turn.
+
+The reactor on the right hand side listens to the “Shipped” event. Whenever a “Shipped” event is created, it sends an email notification to the customer.
+The reactor on the left hand side has a local state. Whenever a Cart has two articles, it displays a promotional offer and creates an event to keep track of this. This is actually where the “Promo displayed” event comes from.
+So those are the four components of a minimal event sourcing system:
+Events to provide a history
+Aggregates to represent the current state of the application
+Calculator to update the state of the application
+Reactors to trigger side effects as events happen
+Why Event Sourcing?
+Having a full history of the events is one of the main benefits. We can know how we got there which helps with a lot of customer support tasks and debugging sessions.
+Being able to Replay Events unlocks very neat features.
+You can go back in time by replaying all events up to a certain point. Replay all events up until Oct 31st… and you get what the application state was on Halloween Day. Spooky!
+All software has bugs. So when a calculator has a bug, you can fix the calculator, replay the events and get back to a valid state.</p>
+<p>Finally, adding columns to an aggregate and backfilling the data is quite simple:</p>
+<ol>
+<li>Add the column.</li>
+<li>Update the calculator.</li>
+<li>Replay the events.</li>
+<li>The data is backfilled!</li>
+</ol>
+<p>On a “regular” relational database, the data you store is the data you read. With event sourcing, the data you write (events) is decoupled from data you read (aggregates). So you can design your aggregates for the current needs of the application. Not having to “future-proof” aggregates for eventual future usage and data needs is quite nice — and avoids a lot of “gut feeling based debates”.
+Aggregates can also be optimized for various usages which comes in handy in read-intensive applications: orders’ summary (for list views), orders’ details (to display one order), orders’ daily reports (for business), etc. You could basically get to the point where your aggregate fields match one to one your UI or report fields. That. Is. Fast reads!
+And finally, Event Sourcing is a great pattern for distributed systems that tend to be asynchronous and have various services or serverless functions. Services can listen to events they are interested in to update their local state, perform actions and publish other events in turn.</p>
+
+<h5>Wrapping up</h5>
+<p> put together a simple implementation of the Event Sourcing framework.
+There are 4 components:</p>
+<ol>
+<li>Aggregate (regular Active Record models)</li>
+<li>Events</li>
+<li>Calculator (built into events)</li>
+<li>Reactors</li>
+</ol>
+<p>The data is persisted on a regular SQL database.
+Updates are Synchronous and Atomic.
+Yet, it brings a lot of value.
+Full History, Audit Log
+Updating aggregates and backfilling data is easy
+Fixing bugs is easier
+There is less risk of “losing” data
+Events can be sent to your favorite analytic platforms with (almost) no additional code
+So, is it like git for data? Pretty much yeah! We definitely encourage you to evaluate event sourcing for your next app, next feature or any existing feature that’s mission critical.
+<h4>Resources</h4>
+<p>Our Event Sourcing implementation is available on Github for educational purpose.
+Original presentation “Event Sourcing Made Simple” given at Conf & Coffee, in Vancouver BC on April 15 can be found there. Recording coming soon.
+Martin Fowler gave an excellent talk where he highlights that Event Sourcing implementations don’t need to be asynchronous. It made us feel good about putting together such a simple implementation.
+We encourage you to look at the Ruby frameworks that we’ve evaluated. They were a great source of inspiration and they might fit your needs better than that 200 lines long gist. Event Sourced Record, Rails Event Store, Sandthorn and Sequent.</p>
+
+</div>
